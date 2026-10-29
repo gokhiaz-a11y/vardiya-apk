@@ -1,0 +1,6 @@
+1) github.com -> New repository (Private olabilir) -> adi: vardiya-apk
+2) "uploading an existing file" ile bu klasorun ICINDEKI her seyi yukle
+   (.github klasoru dahil; gizli klasor gorunmuyorsa Add file > Upload files yerine zip'i ac ve surukle-birak yap)
+3) Actions sekmesi -> "APK Olustur" -> Run workflow (otomatik de baslar)
+4) ~5-8 dk sonra calisma tamamlaninca en alttaki Artifacts -> Vardiya-APK indir
+5) Zip'ten cikan app-debug.apk dosyasini telefona atip kur

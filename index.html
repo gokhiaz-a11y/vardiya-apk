@@ -1,0 +1,2528 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vardiya Döngü Planlayıcı</title>
+<script src="exceljs.min.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: #f0f2f5;
+  min-height: 100vh;
+  padding: 20px;
+}
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+.page {
+  display: none;
+  animation: fadeIn 0.3s ease;
+}
+.page.active {
+  display: block;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.card {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  padding: 40px;
+  max-width: 500px;
+  margin: 60px auto;
+  text-align: center;
+}
+.card h1 {
+  font-size: 28px;
+  color: #333;
+  margin-bottom: 8px;
+}
+.card p {
+  color: #888;
+  margin-bottom: 30px;
+  font-size: 15px;
+}
+.header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.header-bar h2 {
+  color: #333;
+  font-size: 22px;
+}
+.header-info {
+  color: #666;
+  font-size: 14px;
+}
+.btn-add {
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #2196F3, #1976D2);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-add:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(33,150,243,0.35);
+}
+.btn-generate {
+  padding: 14px 32px;
+  background: linear-gradient(135deg, #FF9800, #F57C00);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-generate:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(255,152,0,0.35);
+}
+.btn-back {
+  padding: 10px 20px;
+  background: #e0e0e0;
+  color: #555;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-right: 10px;
+}
+.btn-back:hover { background: #d0d0d0; }
+.btn-export {
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #9C27B0, #7B1FA2);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-export:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(156,39,176,0.35);
+}
+.btn-backup {
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #009688, #00796B);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-backup:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0,150,136,0.35);
+}
+.backup-widget {
+  position: relative;
+  display: inline-block;
+  margin-right: 10px;
+}
+.backup-panel {
+  display: none;
+  position: absolute;
+  top: 28px;
+  right: 0;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.18);
+  padding: 16px;
+  min-width: 240px;
+  z-index: 50;
+  text-align: left;
+}
+.backup-panel.open { display: block; }
+.backup-panel .folder-label {
+  font-size: 12px;
+  color: #888;
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+.backup-panel .folder-name {
+  font-size: 14px;
+  color: #333;
+  font-weight: 700;
+  margin-bottom: 14px;
+  word-break: break-all;
+  background: #f5f5f5;
+  padding: 8px 10px;
+  border-radius: 8px;
+}
+.backup-panel .folder-name.connected {
+  background: #C8E6C9;
+  color: #2E7D32;
+}
+.backup-panel .btn-backup,
+.backup-panel .btn-back {
+  width: 100%;
+  margin: 0 0 8px 0;
+  text-align: center;
+}
+.btn-manage {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #546E7A, #37474F);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  vertical-align: middle;
+}
+.btn-manage:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(55,71,79,0.35);
+}
+.manage-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #F44336;
+  box-shadow: 0 0 0 2px rgba(244,67,54,0.4);
+  display: inline-block;
+}
+.manage-dot.connected {
+  background: #4CAF50;
+  box-shadow: 0 0 0 2px rgba(76,175,80,0.4);
+}
+.manage-panel {
+  min-width: 300px;
+}
+.manage-section-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #555;
+  margin-bottom: 10px;
+  margin-top: 4px;
+}
+.manage-divider {
+  height: 1px;
+  background: #eee;
+  margin: 16px 0;
+}
+.name-edit-list {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 14px 10px;
+  margin-bottom: 14px;
+  padding-top: 6px;
+}
+.header-select-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: 10px;
+}
+.header-select-group select {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 2px solid #e0e0e0;
+  font-size: 14px;
+  background: #fafafa;
+  font-weight: 600;
+  color: #444;
+}
+.cycle-card {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  margin-bottom: 20px;
+  overflow: hidden;
+  border: 1px solid #e8e8e8;
+}
+.cycle-header {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  padding: 14px 20px;
+  font-weight: 700;
+  font-size: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.cycle-header .cycle-num {
+  background: rgba(255,255,255,0.2);
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+}
+.btn-remove-cycle {
+  background: rgba(255,255,255,0.25);
+  color: white;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  font-weight: 600;
+}
+.btn-remove-cycle:hover { background: rgba(255,255,255,0.4); }
+.cycle-header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.cycle-date-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255,255,255,0.18);
+  padding: 4px 10px;
+  border-radius: 8px;
+}
+.cycle-date-group label {
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.cycle-date-group input[type="date"] {
+  border: none;
+  border-radius: 5px;
+  padding: 4px 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+}
+.date-value {
+  border: none;
+  border-radius: 5px;
+  padding: 4px 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+  background: rgba(255,255,255,0.7);
+  cursor: pointer;
+}
+.date-value:hover { background: #fff; }
+.cycle-body {
+  padding: 20px;
+}
+.shift-section {
+  margin-bottom: 25px;
+}
+.shift-section:last-child { margin-bottom: 0; }
+.shift-title {
+  font-weight: 700;
+  font-size: 15px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.shift-title.day { color: #E65100; }
+.shift-title.night { color: #1565C0; }
+.add-names-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+.add-name-btn {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.15s;
+  user-select: none;
+  text-align: center;
+  min-width: 80px;
+}
+.add-name-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+}
+.add-name-btn.husnu { background: #8BC34A; color: #1B5E20; border-color: #689F38; }
+.add-name-btn.gokhan { background: #03A9F4; color: #fff; border-color: #0288D1; }
+.add-name-btn.fatih { background: #FFEB3B; color: #333; border-color: #FBC02D; }
+.add-name-btn.mustafa { background: #F44336; color: #fff; border-color: #D32F2F; }
+.names-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  min-height: 30px;
+}
+.name-chip-wrapper {
+  position: relative;
+  display: inline-block;
+}
+.name-chip {
+  padding: 10px 28px 10px 14px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 14px;
+  border: 2px solid transparent;
+  user-select: none;
+  min-width: 90px;
+  text-align: center;
+}
+.name-chip.husnu { background: #8BC34A; color: #1B5E20; border-color: #689F38; }
+.name-chip.mustafa { background: #F44336; color: #fff; border-color: #D32F2F; }
+.name-chip.fatih { background: #FFEB3B; color: #333; border-color: #FBC02D; }
+.name-chip.gokhan { background: #03A9F4; color: #fff; border-color: #0288D1; }
+.chip-remove {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 20px;
+  height: 20px;
+  background: #333;
+  color: white;
+  border-radius: 50%;
+  font-size: 14px;
+  line-height: 20px;
+  text-align: center;
+  cursor: pointer;
+  font-weight: bold;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  transition: all 0.15s;
+}
+.chip-remove:hover {
+  background: #d32f2f;
+  transform: scale(1.15);
+}
+.empty-list {
+  color: #aaa;
+  font-size: 13px;
+  font-style: italic;
+  padding: 8px 0;
+}
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.table-header h2 {
+  color: #333;
+  font-size: 22px;
+}
+.save-toast {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: #333;
+  color: #fff;
+  padding: 12px 26px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 14px;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.25s ease;
+  z-index: 200;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+}
+.save-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+.month-nav {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.btn-month-nav {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: #fff;
+  color: #555;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  transition: all 0.15s;
+}
+.btn-month-nav:hover {
+  background: #667eea;
+  color: #fff;
+  transform: scale(1.08);
+}
+.schedule-table-wrap {
+  overflow-x: auto;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  padding: 10px;
+}
+.schedule-table {
+  border-collapse: collapse;
+  font-size: 13px;
+  width: 100%;
+}
+.schedule-table th, .schedule-table td {
+  border: 1px solid #bbb;
+  text-align: center;
+  vertical-align: middle;
+}
+.schedule-table .th-corner {
+  background: #fff;
+  color: #333;
+  font-weight: 700;
+  padding: 8px;
+  min-width: 60px;
+}
+.schedule-table .th-date {
+  background: #e3f2fd;
+  color: #333;
+  font-weight: 700;
+  padding: 8px 4px;
+  min-width: 50px;
+  font-size: 14px;
+}
+.schedule-table .th-date.weekend {
+  background: #BBDEFB;
+}
+.schedule-table .th-date.holiday {
+  background: #FFCDD2;
+}
+.schedule-table .th-day {
+  background: #f5f5f5;
+  color: #555;
+  font-weight: 600;
+  font-size: 11px;
+  padding: 10px 2px;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  min-width: 50px;
+  letter-spacing: 1px;
+}
+.schedule-table .th-day.weekend {
+  background: #BBDEFB;
+  color: #1565C0;
+}
+.schedule-table .th-day.holiday {
+  background: #FFCDD2;
+  color: #C62828;
+}
+.schedule-table .cell-label {
+  font-weight: 700;
+  font-size: 12px;
+  padding: 12px 6px;
+  min-width: 60px;
+}
+.schedule-table .cell-label.day {
+  background: #fff8e1;
+  color: #E65100;
+}
+.schedule-table .cell-label.night {
+  background: #e3f2fd;
+  color: #1565C0;
+}
+.schedule-table .person-cell {
+  font-weight: 700;
+  font-size: 13px;
+  padding: 12px 4px;
+  min-width: 50px;
+}
+.person-cell {
+  cursor: pointer;
+  transition: filter 0.15s;
+}
+.person-cell:hover {
+  filter: brightness(0.92);
+}
+.person-cell.overridden {
+  box-shadow: inset 0 0 0 2px #333;
+}
+.edit-section-wrap {
+  margin-top: 22px;
+}
+.edit-table-label {
+  text-align: center;
+  color: #F57C00;
+  font-weight: 700;
+  font-size: 13px;
+  margin: 14px 0 10px;
+}
+.edit-table-label.locked {
+  color: #78909C;
+}
+.edit-action-row {
+  text-align: center;
+  margin-top: 14px;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+.edit-action-row button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+.btn-new-record {
+  padding: 12px 26px;
+  background: linear-gradient(135deg, #607D8B, #455A64);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-new-record:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(69,90,100,0.35);
+}
+.cell-editor-popup {
+  display: none;
+  position: absolute;
+  z-index: 100;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.25);
+  padding: 8px;
+  min-width: 120px;
+}
+.cell-editor-options {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.cell-editor-option {
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  text-align: center;
+}
+.cell-editor-option:hover { transform: scale(1.03); }
+.cell-editor-option.husnu { background: #8BC34A; color: #1B5E20; }
+.cell-editor-option.mustafa { background: #F44336; color: #fff; }
+.cell-editor-option.fatih { background: #FFEB3B; color: #333; }
+.cell-editor-option.gokhan { background: #03A9F4; color: #fff; }
+.cell-editor-option.clear { background: #e0e0e0; color: #555; }
+.empty-state {
+  text-align: center;
+  padding: 40px;
+  color: #888;
+}
+.empty-state p { margin-bottom: 15px; }
+.footer-note {
+  text-align: center;
+  margin-top: 20px;
+  color: #999;
+  font-size: 12px;
+}
+
+/* Döngü ekleme / tarih penceresi */
+.cy-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:9999;padding:16px;}
+.cy-dialog{background:#fff;border-radius:14px;padding:22px;width:100%;max-width:380px;box-shadow:0 10px 40px rgba(0,0,0,.3);font-family:inherit;}
+.cy-dialog h3{margin:0 0 16px;font-size:18px;color:#333;}
+.cy-row{margin-bottom:14px;}
+.cy-row label{display:block;font-size:13px;font-weight:700;color:#555;margin-bottom:6px;}
+.cy-line{display:flex;align-items:center;gap:8px;}
+.cy-input{border:2px solid #d9d9e3;border-radius:8px;padding:10px 12px;font-size:17px;font-weight:700;color:#333;text-align:center;outline:none;}
+.cy-input:focus{border-color:#667eea;}
+.cy-day{width:64px;}
+.cy-full{flex:1;min-width:0;letter-spacing:1px;}
+.cy-fixed{font-size:17px;font-weight:700;color:#777;}
+.cy-calwrap{position:relative;width:46px;height:46px;flex:none;}
+.cy-calbtn{width:46px;height:46px;border:none;border-radius:8px;background:#667eea;color:#fff;font-size:20px;cursor:pointer;}
+.cy-calwrap input[type=date]{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;}
+.cy-hint{font-size:12px;color:#888;margin-top:6px;}
+.cy-err{color:#c62828;font-size:13px;font-weight:600;min-height:18px;margin-bottom:8px;}
+.cy-actions{display:flex;gap:10px;justify-content:flex-end;}
+.cy-actions button{border:none;border-radius:8px;padding:10px 18px;font-size:14px;font-weight:700;cursor:pointer;}
+.cy-ok{background:#667eea;color:#fff;}
+.cy-cancel{background:#eee;color:#444;}
+.cy-clear{background:#fff3e0;color:#E65100;margin-right:auto;}
+</style>
+</head>
+<body>
+
+<div id="page2" class="page active">
+  <div class="container">
+    <div class="header-bar">
+      <div>
+        <h2>🏠 Ana Sayfa</h2>
+        <div class="header-select-group" style="margin-top:8px; display:flex; align-items:center; gap:10px;">
+          <select id="selectYear" onchange="onHeaderDateChange()">
+            <option value="2025">2025</option>
+            <option value="2026">2026</option>
+            <option value="2027">2027</option>
+            <option value="2028">2028</option>
+            <option value="2029">2029</option>
+            <option value="2030">2030</option>
+          </select>
+          <div class="month-nav-inline" style="display:flex; align-items:center; gap:8px;">
+            <button class="btn-month-nav" onclick="changeHeaderMonth(-1)">◀</button>
+            <span id="selectedMonthLabel" style="min-width:80px; text-align:center; font-weight:600; color:#333;">Ocak</span>
+            <button class="btn-month-nav" onclick="changeHeaderMonth(1)">▶</button>
+          </div>
+        </div>
+        <div class="header-info" style="margin-top:8px;">Kaydettiğiniz döngü, siz değiştirene kadar tüm aylarda otomatik olarak uygulanır.</div>
+      </div>
+      <div style="text-align: right;">
+        <button class="btn-add" onclick="addCycle()">+ Döngü Ekle</button>
+        <button class="btn-generate" onclick="goToPage3()">📋 Tablo Oluştur</button>
+        <input type="file" id="restoreFileInput" accept="application/json" style="display:none;" onchange="restoreFromFile(event)">
+        <div class="backup-widget">
+          <button class="btn-manage" id="manageBtn" onclick="toggleBackupPanel()">
+            <span class="manage-dot" id="backupDot"></span> ⚙️ Yönetim
+          </button>
+          <div class="backup-panel manage-panel" id="backupPanel">
+            <div class="manage-section-title">🗂️ Yedekleme</div>
+            <div class="folder-label">Yedek Klasörü</div>
+            <div class="folder-name" id="backupFolderName">Bağlı değil</div>
+            <button class="btn-backup" onclick="backupData()">🗂️ Yedek Oluştur</button>
+            <button class="btn-back" onclick="document.getElementById('restoreFileInput').click()">📂 Yedekten Yükle</button>
+
+            <div class="manage-divider"></div>
+
+            <div class="manage-section-title">✏️ İsim Düzenleme</div>
+            <div class="name-edit-list" id="nameEditList"></div>
+
+            <div class="manage-divider"></div>
+
+            <button class="btn-back" onclick="closeManagePanel()">✖ Kapat</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div id="cyclesContainer"></div>
+    
+    <div id="emptyCycles" class="empty-state" style="display:none;">
+      <p>Henüz döngü eklenmedi.</p>
+    </div>
+    
+    <div style="text-align: right; margin-top: 30px;">
+      <button class="btn-add" onclick="addCycle()">+ Döngü Ekle</button>
+      <button class="btn-generate" onclick="goToPage3()">📋 Tablo Oluştur</button>
+    </div>
+  </div>
+</div>
+
+<div id="page3" class="page">
+  <div class="container">
+    <div class="table-header">
+      <div class="month-nav">
+        <button class="btn-month-nav" onclick="switchMonth(-1)">◀</button>
+        <div>
+          <h2 id="tableTitle">📊 Vardiya Tablosu</h2>
+          <div class="header-info" id="page3Info"></div>
+        </div>
+        <button class="btn-month-nav" onclick="switchMonth(1)">▶</button>
+      </div>
+      <div>
+        <button class="btn-back" onclick="goToPage2()">🏠 Ana Sayfa</button>
+      </div>
+    </div>
+    
+    <div class="schedule-table-wrap" id="tableContainer">
+      <div class="empty-state">
+        <p>Tablo oluşturulmadı.</p>
+      </div>
+    </div>
+
+    <div class="edit-section-wrap" id="editSectionWrap">
+      <div class="edit-action-row" style="margin-bottom:10px;">
+        <button class="btn-export" onclick="exportToExcel()">📊 Excel'e Aktar</button>
+      </div>
+      <div id="recordsChain"></div>
+      <div class="edit-action-row" id="newRecordRow">
+        <button class="btn-new-record" onclick="createNewRecord()">🆕 Yeni Kayıt Oluştur</button>
+      </div>
+    </div>
+    
+    <div class="footer-note">Vardiya Döngü Planlayıcı — Renkler sabit, döngü tekrarlanır. En üstteki tablo değiştirilemez; değişiklik yapmak için "Yeni Kayıt Oluştur" ile altta yeni bir kayıt açın.</div>
+  </div>
+</div>
+
+<div id="cellEditorPopup" class="cell-editor-popup">
+  <div class="cell-editor-options"></div>
+</div>
+
+<script>
+let selectedYear = 2026;
+let selectedMonth = 7;
+let cycles = [];
+
+let colors = {
+  'HÜSNÜ': '#8BC34A',
+  'MUSTAFA': '#F44336',
+  'FATİH': '#FFEB3B',
+  'GÖKHAN': '#03A9F4'
+};
+let textColors = {
+  'HÜSNÜ': '#1B5E20',
+  'MUSTAFA': '#FFFFFF',
+  'FATİH': '#333333',
+  'GÖKHAN': '#FFFFFF'
+};
+const daysTR = ['PAZAR','PAZARTESİ','SALI','ÇARŞAMBA','PERŞEMBE','CUMA','CUMARTESİ'];
+const monthsTR = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+
+function getHolidays(year) {
+  const h = {};
+  const add = (m, d) => { h[`${year}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`] = true; };
+  add(1, 1); add(4, 23); add(5, 1); add(5, 19); add(7, 15); add(8, 30); add(10, 29);
+  return h;
+}
+
+const CYCLES_KEY = 'vardiyaDongu';
+const OVERRIDES_KEY = 'vardiyaGunlukDegisiklikler';
+const NAME_LABELS_KEY = 'vardiyaIsimEtiketleri';
+const LAST_SAVE_KEY = 'vardiyaSonKayitZamani';
+
+function touchLastSaved() {
+  try {
+    localStorage.setItem(LAST_SAVE_KEY, new Date().toISOString());
+  } catch (e) { /* yoksay */ }
+}
+let nameLabels = {};
+
+function persistNameLabels() {
+  try {
+    localStorage.setItem(NAME_LABELS_KEY, JSON.stringify(nameLabels));
+  } catch (e) {
+    console.warn('İsim etiketleri kaydedilemedi:', e);
+  }
+}
+
+function loadNameLabelsFromStorage() {
+  try {
+    const raw = localStorage.getItem(NAME_LABELS_KEY);
+    nameLabels = raw ? JSON.parse(raw) : {};
+  } catch (e) {
+    console.warn('İsim etiketleri yüklenemedi:', e);
+    nameLabels = {};
+  }
+}
+
+// Ekranda gösterilecek ismi döndürür; özelleştirilmemişse orijinal anahtarı kullanır.
+// Renk/veri anahtarı olarak her zaman orijinal isim (HÜSNÜ, MUSTAFA vb.) kullanılmaya devam eder.
+function displayName(key) {
+  const custom = nameLabels[key];
+  return (custom && custom.trim()) ? custom.trim().toLocaleUpperCase('tr-TR') : key;
+}
+
+function renderNameEditor() {
+  const list = document.getElementById('nameEditList');
+  if (!list) return;
+  list.innerHTML = ALL_NAMES.map(key => `
+    <div class="name-chip-wrapper">
+      <div class="name-chip" style="background:${colors[key]};color:${textColors[key]}" onclick="renameRosterName('${key}')">${displayName(key)}</div>
+    </div>
+  `).join('');
+}
+
+// İsme tıklanınca görünen ismi (etiketi) değiştirmek için basit bir istem açar.
+function renameRosterName(key) {
+  const current = displayName(key);
+  const val = prompt('Bu kişi için görünecek ismi girin:', current);
+  if (val === null) return;
+  const trimmed = val.trim().toLocaleUpperCase('tr-TR');
+  if (trimmed) {
+    nameLabels[key] = trimmed;
+  } else {
+    delete nameLabels[key];
+  }
+  persistNameLabels();
+  renderNameEditor();
+  if (document.getElementById('page2').classList.contains('active')) {
+    renderCycles();
+  } else {
+    renderPage3ForCurrentMonth();
+  }
+  showToast('İsim güncellendi ✓');
+}
+
+const ROSTER_KEY = 'vardiyaKisiler';
+function loadRosterFromStorage() {
+  try {
+    const raw = localStorage.getItem(ROSTER_KEY);
+    if (!raw) return;
+    const roster = JSON.parse(raw);
+    if (!Array.isArray(roster) || roster.length === 0) return;
+    ALL_NAMES = roster.map(r => r.key);
+    colors = {};
+    textColors = {};
+    roster.forEach(r => { colors[r.key] = r.color; textColors[r.key] = r.textColor; });
+  } catch (e) {
+    console.warn('Kişi listesi yüklenemedi:', e);
+  }
+}
+
+function persistCycles() {
+  try {
+    localStorage.setItem(CYCLES_KEY, JSON.stringify(cycles));
+    touchLastSaved();
+  } catch (e) {
+    console.warn('Döngü kaydedilemedi:', e);
+  }
+}
+
+// Aynı tarihte (aynı yıl+ay+gün) birden fazla döngü varsa — bu geçersiz bir
+// durumdur (sıfır günlük bir döngü demektir) ve muhtemelen bir hatadan kalma
+// çakışan kayıttır — sadece en sonuncusunu tutar, diğerlerini siler.
+// NOT: Bu artık AYNI AY içindeki farklı tarihli döngüleri SİLMEZ — aynı ay
+// içinde birden fazla döngü olması (örn. 1-6 Eylül ve 7 Eylül'den itibaren)
+// artık kasıtlı ve desteklenen bir durumdur.
+function dedupeCyclesByExactDate() {
+  const lastIndexForDate = {};
+  cycles.forEach((c, idx) => {
+    if (!c.startDate) return;
+    lastIndexForDate[c.startDate] = idx;
+  });
+  const keepIdx = new Set(Object.values(lastIndexForDate));
+  cycles = cycles.filter((c, idx) => !c.startDate || keepIdx.has(idx));
+  cycles.sort((a, b) => new Date(a.startDate + 'T00:00:00') - new Date(b.startDate + 'T00:00:00'));
+}
+
+function loadCyclesFromStorage() {
+  try {
+    const raw = localStorage.getItem(CYCLES_KEY);
+    cycles = raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    console.warn('Döngü yüklenemedi:', e);
+    cycles = [];
+  }
+  const beforeCount = cycles.length;
+  dedupeCyclesByExactDate();
+  if (cycles.length !== beforeCount) {
+    persistCycles();
+  }
+}
+
+function persistOverrides() {
+  try {
+    localStorage.setItem(OVERRIDES_KEY, JSON.stringify(overrides));
+    touchLastSaved();
+  } catch (e) {
+    console.warn('Değişiklikler kaydedilemedi:', e);
+  }
+}
+
+function loadOverridesFromStorage() {
+  try {
+    const raw = localStorage.getItem(OVERRIDES_KEY);
+    overrides = raw ? JSON.parse(raw) : {};
+  } catch (e) {
+    console.warn('Değişiklikler yüklenemedi:', e);
+    overrides = {};
+  }
+}
+function showToast(msg) {
+  let toast = document.getElementById('saveToast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'saveToast';
+    toast.className = 'save-toast';
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(toast._hideTimer);
+  toast._hideTimer = setTimeout(() => toast.classList.remove('show'), 1800);
+}
+
+function showPage(n) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page' + n).classList.add('active');
+}
+function onHeaderDateChange() {
+  selectedYear = parseInt(document.getElementById('selectYear').value);
+  renderCycles();
+}
+function updateHeaderDateDisplay() {
+  const yearSelect = document.getElementById('selectYear');
+  if (yearSelect) yearSelect.value = String(selectedYear);
+  const label = document.getElementById('selectedMonthLabel');
+  if (label) label.textContent = monthsTR[selectedMonth];
+}
+function changeHeaderMonth(delta) {
+  let newMonth = selectedMonth + delta;
+  let newYear = selectedYear;
+  if (newMonth < 0) { newMonth = 11; newYear -= 1; }
+  if (newMonth > 11) { newMonth = 0; newYear += 1; }
+  selectedYear = newYear;
+  selectedMonth = newMonth;
+  updateHeaderDateDisplay();
+  renderCycles();
+}
+function goToPage2() {
+  updateHeaderDateDisplay();
+  renderCycles();
+  showPage(2);
+}
+function goToPage3() {
+  if (cycles.length === 0) {
+    alert('Önce en az bir döngü eklemelisiniz!');
+    return;
+  }
+  renderPage3ForCurrentMonth();
+  showPage(3);
+}
+function renderPage3ForCurrentMonth() {
+  document.getElementById('page3Info').textContent = monthsTR[selectedMonth] + ' ' + selectedYear;
+  document.getElementById('tableTitle').textContent = monthsTR[selectedMonth] + ' ' + selectedYear;
+  generateTable();
+  syncRecordChain();
+}
+function switchMonth(delta) {
+  let newMonth = selectedMonth + delta;
+  let newYear = selectedYear;
+  if (newMonth < 0) { newMonth = 11; newYear -= 1; }
+  if (newMonth > 11) { newMonth = 0; newYear += 1; }
+  selectedYear = newYear;
+  selectedMonth = newMonth;
+  const yearSelect = document.getElementById('selectYear');
+  if (yearSelect) yearSelect.value = String(selectedYear);
+  renderPage3ForCurrentMonth();
+}
+
+function pad2(n) { return String(n).padStart(2, '0'); }
+
+// GG.AA.YYYY veya YYYY-MM-DD formatını kabul eder, geçerliyse ISO (YYYY-MM-DD)
+// döner; geçersizse null döner. Tarih doğruluğu (örn. 31 Şubat) da kontrol edilir.
+function parseFlexibleDate(str) {
+  if (!str) return null;
+  str = str.trim();
+  let m = str.match(/^(\d{1,2})[.\/](\d{1,2})[.\/](\d{4})$/);
+  if (m) {
+    const day = parseInt(m[1], 10), month = parseInt(m[2], 10), year = parseInt(m[3], 10);
+    const d = new Date(year, month - 1, day);
+    if (d.getFullYear() !== year || d.getMonth() !== month - 1 || d.getDate() !== day) return null;
+    return `${year}-${pad2(month)}-${pad2(day)}`;
+  }
+  m = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if (m) {
+    const year = parseInt(m[1], 10), month = parseInt(m[2], 10), day = parseInt(m[3], 10);
+    const d = new Date(year, month - 1, day);
+    if (d.getFullYear() !== year || d.getMonth() !== month - 1 || d.getDate() !== day) return null;
+    return `${year}-${pad2(month)}-${pad2(day)}`;
+  }
+  return null;
+}
+
+// ISO (YYYY-MM-DD) tarihi GG.AA.YYYY olarak gösterir.
+function isoToTR(iso) {
+  if (!iso) return '';
+  const [y, m, d] = iso.split('-');
+  return `${d}.${m}.${y}`;
+}
+
+// Yeni döngü her zaman Ana Sayfa'da o an görüntülenen ayın 7'sine eklenir
+// (Excel'den içe aktarılan döngülerle aynı, tutarlı kural).
+function defaultCycleStartDate() {
+  return `${selectedYear}-${pad2(selectedMonth + 1)}-07`;
+}
+
+// Üstteki ay/yıl seçimini, döngülerin en erken başlangıç tarihine göre ayarlar.
+function syncHeaderDateToCycleStart() {
+  let earliest = null;
+  cycles.forEach(c => {
+    if (!c.startDate) return;
+    const d = new Date(c.startDate + 'T00:00:00');
+    if (!earliest || d < earliest) earliest = d;
+  });
+  if (!earliest) return;
+  selectedYear = earliest.getFullYear();
+  selectedMonth = earliest.getMonth();
+  const yearSelect = document.getElementById('selectYear');
+  if (yearSelect) yearSelect.value = String(selectedYear);
+  updateHeaderDateDisplay();
+}
+
+// Bir isim listesini, bir döngünün başlangıcından hedef tarihe kadar geçen
+// gün sayısı kadar kaydırır — böylece yeni döngü, öncekinin tam olarak
+// kaldığı yerden, aynı sırayla devam eder.
+function rotateListToDate(list, fromCycle, targetDateObj) {
+  if (!list || list.length === 0) return [];
+  const fromStart = new Date(fromCycle.startDate + 'T00:00:00');
+  const diffDays = Math.floor((targetDateObj - fromStart) / 86400000);
+  const offset = ((diffDays % list.length) + list.length) % list.length;
+  return list.slice(offset).concat(list.slice(0, offset));
+}
+
+// Verilen tarihten HEMEN ÖNCE başlamış olan döngüyü döndürür (rotasyon
+// devamlılığı bu döngüye göre hesaplanır).
+function getPrecedingCycle(dateObj) {
+  let preceding = null;
+  cycles.forEach(c => {
+    if (!c.startDate) return;
+    const d = new Date(c.startDate + 'T00:00:00');
+    if (d < dateObj && (!preceding || d > preceding.date)) preceding = { cycle: c, date: d };
+  });
+  return preceding;
+}
+
+
+// ---- Tarih pencereleri: gün-ay-yıl arasında "/" otomatik, yanında takvim düğmesi ----
+function _lastDayISO(y, m0) {
+  return `${y}-${pad2(m0 + 1)}-${pad2(new Date(y, m0 + 1, 0).getDate())}`;
+}
+function _isoToSlash(iso) { return iso ? isoToTR(iso).replace(/\./g, '/') : ''; }
+function _maskSlash(el) {
+  el.addEventListener('input', () => {
+    const v = el.value.replace(/\D/g, '').slice(0, 8);
+    let o = v.slice(0, 2);
+    if (v.length > 2) o += '/' + v.slice(2, 4);
+    if (v.length > 4) o += '/' + v.slice(4);
+    el.value = o;
+  });
+}
+function _calField(id, valueISO) {
+  return `<div class="cy-line">
+    <input id="${id}" class="cy-input cy-full" type="text" inputmode="numeric" placeholder="GG/AA/YYYY" maxlength="10" value="${_isoToSlash(valueISO)}">
+    <div class="cy-calwrap"><button type="button" class="cy-calbtn" tabindex="-1">📅</button>
+    <input type="date" id="${id}Cal" value="${valueISO || ''}"></div>
+  </div>`;
+}
+function _wireCal(id, onPick) {
+  const txt = document.getElementById(id);
+  const cal = document.getElementById(id + 'Cal');
+  _maskSlash(txt);
+  cal.addEventListener('click', () => { try { cal.showPicker(); } catch (e) {} });
+  cal.addEventListener('change', () => {
+    if (!cal.value) return;
+    txt.value = _isoToSlash(cal.value);
+    if (onPick) onPick();
+  });
+  txt.addEventListener('input', () => { if (onPick) onPick(); });
+}
+function _dialog(html) {
+  const ov = document.createElement('div');
+  ov.className = 'cy-overlay';
+  ov.innerHTML = `<div class="cy-dialog">${html}</div>`;
+  document.body.appendChild(ov);
+  return ov;
+}
+
+// Yeni döngü: sadece GÜN sorulur (ay/yıl sabit). Bitiş varsayılanı ayın son günüdür.
+function openAddCycleDialog(year, month0, defDay) {
+  return new Promise(resolve => {
+    const lastISO = _lastDayISO(year, month0);
+    const ov = _dialog(`
+      <h3>🔄 Yeni Döngü</h3>
+      <div class="cy-row">
+        <label>Başlangıç günü</label>
+        <div class="cy-line">
+          <input id="cyDay" class="cy-input cy-day" type="text" inputmode="numeric" maxlength="2" value="${defDay}">
+          <span class="cy-fixed">/ ${pad2(month0 + 1)} / ${year}</span>
+        </div>
+        <div class="cy-hint">${monthsTR[month0]} ${year}</div>
+      </div>
+      <div class="cy-row">
+        <label>Bitiş tarihi</label>
+        ${_calField('cyEnd', lastISO)}
+        <div class="cy-hint">Ay sonu seçiliyse döngü sonraki aylarda da devam eder.</div>
+      </div>
+      <div class="cy-err" id="cyErr"></div>
+      <div class="cy-actions">
+        <button type="button" class="cy-cancel" id="cyCancel">İptal</button>
+        <button type="button" class="cy-ok" id="cyOk">Ekle</button>
+      </div>`);
+    const dayEl = ov.querySelector('#cyDay');
+    const errEl = ov.querySelector('#cyErr');
+    dayEl.addEventListener('input', () => { dayEl.value = dayEl.value.replace(/\D/g, '').slice(0, 2); });
+    _wireCal('cyEnd', null);
+    const close = v => { ov.remove(); resolve(v); };
+    const submit = () => {
+      const day = parseInt(dayEl.value, 10);
+      const startISO = parseFlexibleDate(`${year}-${pad2(month0 + 1)}-${pad2(day || 0)}`);
+      if (!day || !startISO) {
+        errEl.textContent = `${monthsTR[month0]} ayında ${new Date(year, month0 + 1, 0).getDate()} gün var — geçerli bir gün girin.`;
+        return;
+      }
+      const endISO = parseFlexibleDate(ov.querySelector('#cyEnd').value);
+      if (!endISO) { errEl.textContent = 'Bitiş tarihi geçersiz (GG/AA/YYYY).'; return; }
+      if (endISO < startISO) { errEl.textContent = 'Bitiş tarihi, başlangıçtan önce olamaz.'; return; }
+      close({ startDate: startISO, endDate: endISO === lastISO ? null : endISO });
+    };
+    ov.querySelector('#cyOk').onclick = submit;
+    ov.querySelector('#cyCancel').onclick = () => close(null);
+    ov.addEventListener('keydown', e => {
+      if (e.key === 'Enter') submit();
+      if (e.key === 'Escape') close(null);
+    });
+    dayEl.focus(); dayEl.select();
+  });
+}
+
+// Tek tarih soran pencere (kart üzerindeki Başlangıç/Bitiş düzenleme). null=iptal, ''=temizle
+function openDateDialog(title, valueISO, allowClear) {
+  return new Promise(resolve => {
+    const ov = _dialog(`
+      <h3>${title}</h3>
+      <div class="cy-row">${_calField('cyOne', valueISO)}</div>
+      <div class="cy-err" id="cyErr"></div>
+      <div class="cy-actions">
+        ${allowClear ? '<button type="button" class="cy-clear" id="cyClear">Sürüyor yap</button>' : ''}
+        <button type="button" class="cy-cancel" id="cyCancel">İptal</button>
+        <button type="button" class="cy-ok" id="cyOk">Tamam</button>
+      </div>`);
+    _wireCal('cyOne', null);
+    const close = v => { ov.remove(); resolve(v); };
+    const submit = () => {
+      const iso = parseFlexibleDate(ov.querySelector('#cyOne').value);
+      if (!iso) { ov.querySelector('#cyErr').textContent = 'Geçersiz tarih (GG/AA/YYYY).'; return; }
+      close(iso);
+    };
+    ov.querySelector('#cyOk').onclick = submit;
+    ov.querySelector('#cyCancel').onclick = () => close(null);
+    const clr = ov.querySelector('#cyClear');
+    if (clr) clr.onclick = () => close('');
+    ov.addEventListener('keydown', e => {
+      if (e.key === 'Enter') submit();
+      if (e.key === 'Escape') close(null);
+    });
+    ov.querySelector('#cyOne').focus();
+  });
+}
+
+// "Döngü Ekle":
+// - Hiç döngü yoksa pencere açılmadan, Ana Sayfa'da görüntülenen ayın 1'inden
+//   başlayan ve süresiz devam eden (bitiş tarihsiz) ilk döngü eklenir.
+// - Döngü varsa başlangıç günü pencerede seçilir (araya da girilebilir).
+//   Varsayılan: en son döngünün bitiş tarihi varsa hemen ertesi günü, yoksa
+//   görüntülenen ayın 1'i (o gün doluysa ilk boş gün).
+// Üstteki ay/yıl göstergesi yeni döngünün ayına taşınır ki eklenen döngü
+// hemen görünsün.
+async function addCycle() {
+  const existingDates = new Set(cycles.map(c => c.startDate));
+  const toISO = dt => `${dt.getFullYear()}-${pad2(dt.getMonth() + 1)}-${pad2(dt.getDate())}`;
+
+  let answer;
+  if (cycles.length === 0) {
+    answer = { startDate: `${selectedYear}-${pad2(selectedMonth + 1)}-01`, endDate: null };
+  } else {
+    let latest = null;
+    cycles.forEach(c => {
+      if (c.startDate && (!latest || c.startDate > latest.startDate)) latest = c;
+    });
+    let def = new Date(selectedYear, selectedMonth, 1);
+    if (latest && latest.endDate) {
+      const after = new Date(latest.endDate + 'T00:00:00');
+      after.setDate(after.getDate() + 1);
+      if (after >= def) def = after;
+    }
+    let guard = 0;
+    while (existingDates.has(toISO(def)) && guard++ < 366) def.setDate(def.getDate() + 1);
+
+    // Bitiş varsayılan olarak ayın son günüdür (süresiz); takvim düğmesiyle değiştirilebilir.
+    answer = await openAddCycleDialog(def.getFullYear(), def.getMonth(), def.getDate());
+    if (!answer) return; // Vazgeçildi
+  }
+  const startDate = answer.startDate;
+  if (existingDates.has(startDate)) {
+    alert('Bu tarihte zaten bir döngü var. \"+ Döngü Ekle\" butonuna tekrar basıp başka bir gün girin.');
+    return;
+  }
+  const endDate = answer.endDate; // null = ay sonu / sürüyor
+
+  const dateObj = new Date(startDate + 'T00:00:00');
+
+  // Yeni döngü, üstteki (en son) döngüyle birebir aynı isim dizilişiyle
+  // oluşturulur — döngü döndürülmez, doğrudan kopyalanır.
+  const preceding = getPrecedingCycle(dateObj);
+  const newCycle = preceding
+    ? {
+        day: [...preceding.cycle.day],
+        night: [...preceding.cycle.night],
+        startDate
+      }
+    : { day: [], night: [], startDate };
+  if (endDate) newCycle.endDate = endDate;
+
+  cycles.push(newCycle);
+  cycles.sort((a, b) => new Date(a.startDate + 'T00:00:00') - new Date(b.startDate + 'T00:00:00'));
+
+  selectedYear = dateObj.getFullYear();
+  selectedMonth = dateObj.getMonth();
+  updateHeaderDateDisplay();
+
+  renderCycles();
+  persistCycles();
+  refreshTableIfPresent();
+}
+
+function updateCycleDate(index, value) {
+  cycles[index].startDate = value;
+  cycles.sort((a, b) => new Date(a.startDate + 'T00:00:00') - new Date(b.startDate + 'T00:00:00'));
+
+  // Sayfa sadece o an görüntülenen aya denk gelen döngüleri listeler. Tarihi
+  // farklı bir aya taşırsanız, görünümü de o yeni tarihe kaydırıyoruz —
+  // aksi halde döngü hâlâ var olduğu halde listeden kaybolup "iptal olmuş"
+  // gibi görünüyordu.
+  const newDateObj = new Date(value + 'T00:00:00');
+  if (!isNaN(newDateObj)) {
+    selectedYear = newDateObj.getFullYear();
+    selectedMonth = newDateObj.getMonth();
+    updateHeaderDateDisplay();
+  }
+
+  renderCycles();
+  persistCycles();
+  refreshTableIfPresent();
+}
+
+// Kart üzerindeki "Başlangıç" ve "Bitiş" etiketlerine tıklanınca açılan
+// düzenleme pencereleri. Native <input type="date"> yerine metin istemi
+// (prompt) kullanılıyor çünkü tarih kutusunda bazı rakam tuşları gün/ay/yıl
+// alanları arasında otomatik zıplayıp yanlış tarih girilmesine yol açıyordu.
+async function editCycleStartDate(ci) {
+  const cycle = cycles[ci];
+  const parsed = await openDateDialog('Başlangıç tarihi', cycle.startDate, false);
+  if (!parsed) return;
+  updateCycleDate(ci, parsed);
+}
+
+async function editCycleEndDate(ci) {
+  const cycle = cycles[ci];
+  const parsed = await openDateDialog('Bitiş tarihi', cycle.endDate || _lastDayISO(...cycle.startDate.split('-').slice(0,2).map((x,i)=>i?parseInt(x,10)-1:parseInt(x,10))), true);
+  if (parsed === null) return;
+  if (parsed === '') {
+    delete cycle.endDate;
+  } else {
+    if (parsed < cycle.startDate) {
+      alert('Bitiş tarihi, başlangıç tarihinden önce olamaz.');
+      return;
+    }
+    cycle.endDate = parsed;
+  }
+  renderCycles();
+  persistCycles();
+  refreshTableIfPresent();
+}
+function removeCycle(index) {
+  const removedCycle = JSON.parse(JSON.stringify(cycles[index]));
+
+  // Silinen döngünün kapsadığı tarih aralığını (renderCycles()'taki aynı
+  // mantıkla) hesapla: kendi bitiş tarihi varsa onu, yoksa ondan sonraki
+  // döngünün başlangıcından bir gün öncesini, o da yoksa süresiz kabul et.
+  const removedStart = removedCycle.startDate ? new Date(removedCycle.startDate + 'T00:00:00') : null;
+  let removedEnd = null;
+  if (removedCycle.endDate) {
+    removedEnd = new Date(removedCycle.endDate + 'T00:00:00');
+  } else {
+    const next = cycles[index + 1];
+    if (next && next.startDate) {
+      removedEnd = new Date(next.startDate + 'T00:00:00');
+      removedEnd.setDate(removedEnd.getDate() - 1);
+    }
+  }
+
+  // Silinen döngünün aralığı boşta kalmasın diye bir önceki döngüyle
+  // birleştirilir: önceki döngü, silinen döngünün bitiş tarihine kadar uzar.
+  // Silinen döngünün bitiş tarihi yoksa (sürüyordu) önceki döngünün de
+  // bitiş tarihi kalkar; yani kendinden sonraki döngüye kadar / süresiz sürer.
+  const prevCycle = index > 0 ? cycles[index - 1] : null;
+  if (prevCycle && prevCycle.startDate) {
+    if (removedCycle.endDate) {
+      prevCycle.endDate = removedCycle.endDate;
+    } else {
+      delete prevCycle.endDate;
+    }
+  } else if (index === 0 && cycles[1] && cycles[1].startDate && removedCycle.startDate
+             && cycles[1].startDate !== removedCycle.startDate) {
+    // İlk döngü siliniyorsa birleştirilecek önceki döngü yoktur: bu durumda
+    // 2. döngünün başlangıç tarihi, silinen ilk döngünün başlangıç tarihi
+    // olur. İsim sıraları, 2. döngünün kendi günlerindeki atamalar
+    // değişmeyecek şekilde geriye doğru kaydırılır.
+    const nextCycle = cycles[1];
+    const newStartObj = new Date(removedCycle.startDate + 'T00:00:00');
+    nextCycle.day = rotateListToDate(nextCycle.day, nextCycle, newStartObj);
+    nextCycle.night = rotateListToDate(nextCycle.night, nextCycle, newStartObj);
+    nextCycle.startDate = removedCycle.startDate;
+  }
+
+  cycles.splice(index, 1);
+
+  // O döngüye ait, elle girilmiş hücre geçersiz kılmalarını (override) da
+  // temizle. Aksi halde döngü silinse bile o güne özel eski atama tabloda
+  // kalmaya devam ediyor ve "eski döngü üzerinden tablo oluşturuyor" gibi
+  // görünüyordu — çünkü override, tarihe bağlı ve hangi döngünün geçerli
+  // olduğundan bağımsız saklanıyor.
+  if (removedStart) {
+    Object.keys(overrides).forEach(key => {
+      const m = key.match(/^(-?\d+)-(\d+)-(\d+)-(day|night)$/);
+      if (!m) return;
+      const d = new Date(parseInt(m[1], 10), parseInt(m[2], 10), parseInt(m[3], 10));
+      if (d >= removedStart && (!removedEnd || d <= removedEnd)) {
+        delete overrides[key];
+      }
+    });
+    persistOverrides();
+  }
+
+  renderCycles();
+  persistCycles();
+  refreshTableIfPresent();
+}
+
+function addNameToCycle(ci, shift, name) {
+  cycles[ci][shift].push(name);
+  renderCycles();
+  persistCycles();
+  refreshTableIfPresent();
+}
+function removeName(ci, shift, ni) {
+  cycles[ci][shift].splice(ni, 1);
+  renderCycles();
+  persistCycles();
+  refreshTableIfPresent();
+}
+
+// Döngülerde yapılan her değişiklikten sonra, tablo daha önce oluşturulmuşsa
+// (tableContainer içinde bir tablo varsa) onu da güncel veriyle yeniden çizer;
+// böylece sadece döngü kartındaki etiket değil, gerçek takvim de değişir.
+function refreshTableIfPresent() {
+  const tc = document.getElementById('tableContainer');
+  if (tc && tc.querySelector('table')) {
+    generateTable();
+  }
+}
+
+// Verilen tarihte aktif olan döngünün (cycles dizisindeki) index'ini döndürür.
+function getActiveCycleIndexForDate(dateObj) {
+  let activeIndex = -1;
+  let activeStart = null;
+  cycles.forEach((c, idx) => {
+    if (!c.startDate) return;
+    const cd = new Date(c.startDate + 'T00:00:00');
+    if (cd > dateObj) return;
+    // Bir bitiş tarihi belirtilmişse ve hedef tarih ondan sonraysa, bu
+    // döngü artık geçerli değildir — aday olarak dikkate alınmaz.
+    if (c.endDate) {
+      const ed = new Date(c.endDate + 'T00:00:00');
+      if (dateObj > ed) return;
+    }
+    if (!activeStart || cd >= activeStart) {
+      activeStart = cd;
+      activeIndex = idx;
+    }
+  });
+  return activeIndex;
+}
+
+// Ana sayfada, seçili ay/yıl ile kesişen TÜM döngüler gösterilir (bir ay
+// içinde birden fazla döngü olabilir — örn. 1-6 Eylül bir döngü, 7 Eylül'den
+// itibaren başka bir döngü). Sadece o ay tamamen bitmiş (o aydan önce sona
+// ermiş) eski döngüler listeden düşer; böylece liste sonsuza kadar büyümez
+// ama aynı ay içindeki döngülerin hepsi görünür kalır.
+function renderCycles() {
+  const container = document.getElementById('cyclesContainer');
+  const empty = document.getElementById('emptyCycles');
+  const emptyText = empty ? empty.querySelector('p') : null;
+
+  const monthStart = new Date(selectedYear, selectedMonth, 1);
+  const monthEnd = new Date(selectedYear, selectedMonth + 1, 0);
+
+  // Her döngünün gerçek bitiş tarihini (kendinden sonraki döngü başlamadan
+  // bir gün önce, ya da hiç sonraki yoksa null = hâlâ sürüyor) hesapla.
+  const ranges = cycles.map((c, idx) => {
+    const start = c.startDate ? new Date(c.startDate + 'T00:00:00') : null;
+    const next = cycles[idx + 1];
+    let end = null;
+    if (c.endDate) {
+      end = new Date(c.endDate + 'T00:00:00');
+    } else if (next && next.startDate) {
+      end = new Date(next.startDate + 'T00:00:00');
+      end.setDate(end.getDate() - 1);
+    }
+    return { start, end };
+  });
+
+  const visibleIdx = [];
+  cycles.forEach((c, idx) => {
+    const { start, end } = ranges[idx];
+    if (!start) return;
+    if (start > monthEnd) return;
+    if (end && end < monthStart) return;
+    visibleIdx.push(idx);
+  });
+
+  if (cycles.length === 0 || visibleIdx.length === 0) {
+    container.innerHTML = '';
+    if (emptyText) emptyText.textContent = 'Henüz döngü eklenmedi.';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  const buildAddButtons = (ci, shift) => `
+    <div class="add-names-row">
+      ${ALL_NAMES.map(key => `<div class="add-name-btn" style="background:${colors[key]};color:${textColors[key]}" onclick="addNameToCycle(${ci},'${shift}','${key}')">${displayName(key)}</div>`).join('')}
+    </div>
+  `;
+
+  let html = '';
+  visibleIdx.forEach(ci => {
+    const cycle = cycles[ci];
+    const dayAdd = buildAddButtons(ci, 'day');
+    const nightAdd = buildAddButtons(ci, 'night');
+    const dayItems = cycle.day.length > 0
+      ? cycle.day.map((name, ni) => `
+        <div class="name-chip-wrapper">
+          <div class="name-chip" style="background:${colors[name] || '#e0e0e0'};color:${textColors[name] || '#333'}">${displayName(name)}</div>
+          <div class="chip-remove" onclick="removeName(${ci},'day',${ni})">×</div>
+        </div>
+      `).join('')
+      : '<span class="empty-list">Henüz isim eklenmedi</span>';
+
+    const nightItems = cycle.night.length > 0
+      ? cycle.night.map((name, ni) => `
+        <div class="name-chip-wrapper">
+          <div class="name-chip" style="background:${colors[name] || '#e0e0e0'};color:${textColors[name] || '#333'}">${displayName(name)}</div>
+          <div class="chip-remove" onclick="removeName(${ci},'night',${ni})">×</div>
+        </div>
+      `).join('')
+      : '<span class="empty-list">Henüz isim eklenmedi</span>';
+
+    const sd = cycle.startDate ? new Date(cycle.startDate + 'T00:00:00') : null;
+
+    // Kartta gösterilen aralık, seçili aya göre KIRPILIR: döngü daha önceki
+    // bir ayda başlamışsa bu ayın 1'inden, bu ayda başlamışsa gerçek
+    // başlangıcından gösterilir; döngü sonraki bir aya taşıyorsa (veya hâlâ
+    // sürüyorsa) bu ayın son gününde bitmiş gibi gösterilir. Böylece
+    // Eylül'ü görüntülerken kart hep "Eylül içinde" bir aralık gösterir,
+    // ileri bir ayda başka bir döngü olsa bile.
+    const { start, end } = ranges[ci];
+    const dispStart = (start && start > monthStart) ? start : monthStart;
+    const dispEnd = (end && end < monthEnd) ? end : monthEnd;
+    const rangeLabel = sd
+      ? `${dispStart.getDate()} ${monthsTR[dispStart.getMonth()]} ${dispStart.getFullYear()} – ${dispEnd.getDate()} ${monthsTR[dispEnd.getMonth()]} ${dispEnd.getFullYear()}`
+      : 'Tarih yok';
+
+    html += `<div class="cycle-card">
+      <div class="cycle-header">
+        <span>🔄 Döngü <span class="cycle-num">${rangeLabel}</span></span>
+        <div class="cycle-header-right">
+          <div class="cycle-date-group">
+            <label>Başlangıç:</label>
+            <span class="date-value" onclick="editCycleStartDate(${ci})">${isoToTR(cycle.startDate || defaultCycleStartDate())} ✎</span>
+          </div>
+          <div class="cycle-date-group">
+            <label>Bitiş:</label>
+            <span class="date-value" onclick="editCycleEndDate(${ci})">${cycle.endDate ? isoToTR(cycle.endDate) : 'Sürüyor'} ✎</span>
+          </div>
+          <button class="btn-remove-cycle" onclick="removeCycle(${ci})">🗑️ Kaldır</button>
+        </div>
+      </div>
+      <div class="cycle-body">
+        <div class="shift-section">
+          <div class="shift-title day">Gündüz Vardiyası</div>
+          ${dayAdd}
+          <div class="names-grid">${dayItems}</div>
+        </div>
+        <div class="shift-section">
+          <div class="shift-title night">Gece Vardiyası</div>
+          ${nightAdd}
+          <div class="names-grid">${nightItems}</div>
+        </div>
+      </div>
+    </div>`;
+  });
+  container.innerHTML = html;
+}
+
+function getDaysInMonth(year, month) {
+  return new Date(year, month + 1, 0).getDate();
+}
+function getDayOfWeek(year, month, day) {
+  return new Date(year, month, day).getDay();
+}
+
+function getActiveCycleForDate(dateObj) {
+  let active = null;
+  let activeStart = null;
+  cycles.forEach(c => {
+    if (!c.startDate) return;
+    const cd = new Date(c.startDate + 'T00:00:00');
+    if (cd > dateObj) return;
+    // Bir bitiş tarihi belirtilmişse ve hedef tarih ondan sonraysa, bu
+    // döngü artık geçerli değildir — aday olarak dikkate alınmaz.
+    if (c.endDate) {
+      const ed = new Date(c.endDate + 'T00:00:00');
+      if (dateObj > ed) return;
+    }
+    if (!activeStart || cd >= activeStart) {
+      activeStart = cd;
+      active = c;
+    }
+  });
+  return active;
+}
+
+function getNameForShift(cycle, shift, dateObj) {
+  if (!cycle) return null;
+  const list = cycle[shift];
+  if (!list || list.length === 0) return null;
+  const startDate = new Date(cycle.startDate + 'T00:00:00');
+  const diffDays = Math.floor((dateObj - startDate) / 86400000);
+  const idx = ((diffDays % list.length) + list.length) % list.length;
+  return list[idx];
+}
+
+let overrides = {};
+function overrideKey(y, m, d, shift) { return `${y}-${m}-${d}-${shift}`; }
+
+function getScheduleForDay(year, month, day) {
+  const dateObj = new Date(year, month, day);
+  const cycle = getActiveCycleForDate(dateObj);
+  const autoDay = getNameForShift(cycle, 'day', dateObj);
+  const autoNight = getNameForShift(cycle, 'night', dateObj);
+  const dayKey = overrideKey(year, month, day, 'day');
+  const nightKey = overrideKey(year, month, day, 'night');
+  return {
+    dayName: overrides.hasOwnProperty(dayKey) ? overrides[dayKey] : autoDay,
+    nightName: overrides.hasOwnProperty(nightKey) ? overrides[nightKey] : autoNight,
+    dayOverridden: overrides.hasOwnProperty(dayKey),
+    nightOverridden: overrides.hasOwnProperty(nightKey)
+  };
+}
+
+let ALL_NAMES = ['FATİH', 'GÖKHAN', 'HÜSNÜ', 'MUSTAFA'];
+
+document.addEventListener('click', function(e) {
+  const popup = document.getElementById('cellEditorPopup');
+  if (popup && popup.style.display === 'block' && !popup.contains(e.target)) {
+    popup.style.display = 'none';
+  }
+});
+
+function generateTable() {
+  const daysInMonth = getDaysInMonth(selectedYear, selectedMonth);
+  const holidays = getHolidays(selectedYear);
+  
+  let html = '<table class="schedule-table">';
+  
+  html += '<tr><th class="th-corner"></th>';
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dow = getDayOfWeek(selectedYear, selectedMonth, d);
+    const dateKey = `${selectedYear}-${String(selectedMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isWeekend = (dow === 0 || dow === 6);
+    const isHoliday = holidays[dateKey];
+    let cls = 'th-date';
+    if (isHoliday) cls += ' holiday';
+    else if (isWeekend) cls += ' weekend';
+    html += `<th class="${cls}">${d}</th>`;
+  }
+  html += '</tr>';
+  
+  html += '<tr><th class="th-corner"></th>';
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dow = getDayOfWeek(selectedYear, selectedMonth, d);
+    const dateKey = `${selectedYear}-${String(selectedMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isWeekend = (dow === 0 || dow === 6);
+    const isHoliday = holidays[dateKey];
+    let cls = 'th-day';
+    if (isHoliday) cls += ' holiday';
+    else if (isWeekend) cls += ' weekend';
+    html += `<th class="${cls}">${daysTR[dow]}</th>`;
+  }
+  html += '</tr>';
+  
+  html += '<tr><td class="cell-label day">07:00<br>19:00</td>';
+  for (let d = 1; d <= daysInMonth; d++) {
+    const { dayName, dayOverridden } = getScheduleForDay(selectedYear, selectedMonth, d);
+    const ovCls = dayOverridden ? ' overridden' : '';
+    if (dayName) {
+      const bg = colors[dayName] || '#e9ecef';
+      const tc = textColors[dayName] || '#333';
+      html += `<td class="person-cell${ovCls}" style="background:${bg};color:${tc}">${displayName(dayName)}</td>`;
+    } else {
+      html += `<td class="person-cell${ovCls}">–</td>`;
+    }
+  }
+  html += '</tr>';
+  
+  html += '<tr><td class="cell-label night">19:00<br>07:00</td>';
+  for (let d = 1; d <= daysInMonth; d++) {
+    const { nightName, nightOverridden } = getScheduleForDay(selectedYear, selectedMonth, d);
+    const ovCls = nightOverridden ? ' overridden' : '';
+    if (nightName) {
+      const bg = colors[nightName] || '#e9ecef';
+      const tc = textColors[nightName] || '#333';
+      html += `<td class="person-cell${ovCls}" style="background:${bg};color:${tc}">${displayName(nightName)}</td>`;
+    } else {
+      html += `<td class="person-cell${ovCls}">–</td>`;
+    }
+  }
+  html += '</tr>';
+  
+  html += '</table>';
+  document.getElementById('tableContainer').innerHTML = html;
+}
+
+// ==================================================================
+// Kayıt zinciri — en üstteki tablo (Kayıt 1) hiçbir zaman değiştirilemez.
+// "Yeni Kayıt Oluştur" son kaydın (yoksa üsttekinin) kopyasını alta ekler;
+// sadece zincirdeki EN SON kayıt düzenlenebilir. "Kaydet" o kaydı kilitler,
+// döngüye kalıcı olarak işler (sonraki aylar otomatik bu tablodan devam
+// eder) ve yeni kayıt oluşturmaya hazır hale getirir. "Sil" o kaydı siler
+// ve bir önceki kaydın kilidini açar (hiçbir şey sormadan).
+// ==================================================================
+const RECORD_CHAIN_KEY = 'vardiyaKayitZinciri';
+let recordChains = {};
+let recordChain = [];
+
+function loadRecordChainsFromStorage() {
+  try {
+    const raw = localStorage.getItem(RECORD_CHAIN_KEY);
+    recordChains = raw ? JSON.parse(raw) : {};
+  } catch (e) {
+    recordChains = {};
+  }
+}
+function persistRecordChains() {
+  try {
+    localStorage.setItem(RECORD_CHAIN_KEY, JSON.stringify(recordChains));
+  } catch (e) {
+    console.warn('Kayıt zinciri kaydedilemedi:', e);
+  }
+}
+function chainMonthKey(y, m) { return y + '-' + m; }
+
+function syncRecordChain() {
+  const key = chainMonthKey(selectedYear, selectedMonth);
+  if (!recordChains[key]) recordChains[key] = [];
+  recordChain = recordChains[key];
+  recordUndoStack = [];
+  recordRedoStack = [];
+  renderRecordChain();
+}
+
+function getScheduleForDayFrom(year, month, day, ov) {
+  const dateObj = new Date(year, month, day);
+  const cycle = getActiveCycleForDate(dateObj);
+  const autoDay = getNameForShift(cycle, 'day', dateObj);
+  const autoNight = getNameForShift(cycle, 'night', dateObj);
+  const dayKey = overrideKey(year, month, day, 'day');
+  const nightKey = overrideKey(year, month, day, 'night');
+  return {
+    dayName: ov.hasOwnProperty(dayKey) ? ov[dayKey] : autoDay,
+    nightName: ov.hasOwnProperty(nightKey) ? ov[nightKey] : autoNight,
+    dayOverridden: ov.hasOwnProperty(dayKey),
+    nightOverridden: ov.hasOwnProperty(nightKey)
+  };
+}
+
+function buildRecordTableHtml(ov, editable, idx) {
+  const daysInMonth = getDaysInMonth(selectedYear, selectedMonth);
+  const holidays = getHolidays(selectedYear);
+
+  let html = '<table class="schedule-table">';
+
+  html += '<tr><th class="th-corner"></th>';
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dow = getDayOfWeek(selectedYear, selectedMonth, d);
+    const dateKey = `${selectedYear}-${String(selectedMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isWeekend = (dow === 0 || dow === 6);
+    const isHoliday = holidays[dateKey];
+    let cls = 'th-date';
+    if (isHoliday) cls += ' holiday';
+    else if (isWeekend) cls += ' weekend';
+    html += `<th class="${cls}">${d}</th>`;
+  }
+  html += '</tr>';
+
+  html += '<tr><th class="th-corner"></th>';
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dow = getDayOfWeek(selectedYear, selectedMonth, d);
+    const dateKey = `${selectedYear}-${String(selectedMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isWeekend = (dow === 0 || dow === 6);
+    const isHoliday = holidays[dateKey];
+    let cls = 'th-day';
+    if (isHoliday) cls += ' holiday';
+    else if (isWeekend) cls += ' weekend';
+    html += `<th class="${cls}">${daysTR[dow]}</th>`;
+  }
+  html += '</tr>';
+
+  html += '<tr><td class="cell-label day">07:00<br>19:00</td>';
+  for (let d = 1; d <= daysInMonth; d++) {
+    const { dayName, dayOverridden } = getScheduleForDayFrom(selectedYear, selectedMonth, d, ov);
+    const ovCls = dayOverridden ? ' overridden' : '';
+    const click = editable ? ` onclick="openCellEditorEdit(event,${d},'day',${idx})"` : '';
+    if (dayName) {
+      const bg = colors[dayName] || '#e9ecef';
+      const tc = textColors[dayName] || '#333';
+      html += `<td class="person-cell${ovCls}" style="background:${bg};color:${tc}"${click}>${displayName(dayName)}</td>`;
+    } else {
+      html += `<td class="person-cell${ovCls}"${click}>–</td>`;
+    }
+  }
+  html += '</tr>';
+
+  html += '<tr><td class="cell-label night">19:00<br>07:00</td>';
+  for (let d = 1; d <= daysInMonth; d++) {
+    const { nightName, nightOverridden } = getScheduleForDayFrom(selectedYear, selectedMonth, d, ov);
+    const ovCls = nightOverridden ? ' overridden' : '';
+    const click = editable ? ` onclick="openCellEditorEdit(event,${d},'night',${idx})"` : '';
+    if (nightName) {
+      const bg = colors[nightName] || '#e9ecef';
+      const tc = textColors[nightName] || '#333';
+      html += `<td class="person-cell${ovCls}" style="background:${bg};color:${tc}"${click}>${displayName(nightName)}</td>`;
+    } else {
+      html += `<td class="person-cell${ovCls}"${click}>–</td>`;
+    }
+  }
+  html += '</tr>';
+
+  html += '</table>';
+  return html;
+}
+
+function renderRecordChain() {
+  const wrap = document.getElementById('recordsChain');
+
+  // Hücre düzenlenince tüm zincir yeniden çiziliyor; bu sırada tablonun
+  // (çok günlü ay tablosu yatayda kaydırılabiliyor) o anki kaydırma
+  // konumunu kaybetmemesi için önce mevcut konumu alıp yeniden çizdikten
+  // sonra aynı konuma geri koyuyoruz — böylece her düzenlemede tablo
+  // başa (1. güne) dönmüyor.
+  const oldWraps = wrap.querySelectorAll('.schedule-table-wrap');
+  const lastScrollLeft = oldWraps.length > 0 ? oldWraps[oldWraps.length - 1].scrollLeft : 0;
+
+  let html = '';
+  recordChain.forEach((rec, idx) => {
+    const isLast = idx === recordChain.length - 1;
+    const editable = isLast && !rec.locked;
+    const label = rec.locked
+      ? ('🔒 Kayıt ' + (idx + 2) + ' — kilitli')
+      : ('✏️ Kayıt ' + (idx + 2) + ' — değişiklik yapabilirsiniz');
+    html += '<div class="edit-table-label' + (rec.locked ? ' locked' : '') + '">' + label + '</div>';
+    html += '<div class="schedule-table-wrap">' + buildRecordTableHtml(rec.overrides, editable, idx) + '</div>';
+    if (editable) {
+      const undoDisabled = recordUndoStack.length === 0 ? ' disabled' : '';
+      const redoDisabled = recordRedoStack.length === 0 ? ' disabled' : '';
+      html += '<div class="edit-action-row">' +
+        '<button class="btn-back"' + undoDisabled + ' onclick="undoRecordEdit()">↩️ Geri</button>' +
+        '<button class="btn-back"' + redoDisabled + ' onclick="redoRecordEdit()">↪️ İleri</button>' +
+        '</div>' +
+        '<div class="edit-action-row">' +
+        '<button class="btn-backup" onclick="saveRecord(' + idx + ')">💾 Kaydet</button>' +
+        '<button class="btn-back" onclick="deleteRecord(' + idx + ')">🗑️ Sil</button>' +
+        '</div>';
+    } else if (isLast && rec.locked) {
+      html += '<div class="edit-action-row">' +
+        '<button class="btn-back" onclick="deleteRecord(' + idx + ')">🗑️ Sil</button>' +
+        '<button class="btn-back" onclick="unlockRecord(' + idx + ')">🔓 Kilidi Aç</button>' +
+        '</div>';
+    }
+  });
+  wrap.innerHTML = html;
+
+  const newWraps = wrap.querySelectorAll('.schedule-table-wrap');
+  if (newWraps.length > 0) {
+    newWraps[newWraps.length - 1].scrollLeft = lastScrollLeft;
+  }
+
+  const showNewBtn = recordChain.length === 0 || recordChain[recordChain.length - 1].locked;
+  const newRow = document.getElementById('newRecordRow');
+  if (newRow) newRow.style.display = showNewBtn ? 'flex' : 'none';
+}
+
+// Şu an düzenlenmekte olan kaydın "Geri Al / İleri Al" (undo/redo) geçmişi.
+// Her yeni kayıt oluşturulduğunda, kaydedildiğinde veya silindiğinde sıfırlanır.
+let recordUndoStack = [];
+let recordRedoStack = [];
+
+// Son kaydın (yoksa üstteki tablonun) kopyasını alarak yeni, düzenlenebilir
+// bir kayıt oluşturur.
+function createNewRecord() {
+  const baseOverrides = recordChain.length > 0
+    ? recordChain[recordChain.length - 1].overrides
+    : overrides;
+  recordChain.push({
+    overrides: JSON.parse(JSON.stringify(baseOverrides)),
+    locked: false
+  });
+  recordUndoStack = [];
+  recordRedoStack = [];
+  persistRecordChains();
+  renderRecordChain();
+}
+
+function openCellEditorEdit(evt, day, shift, idx) {
+  evt.stopPropagation();
+  const popup = document.getElementById('cellEditorPopup');
+  const optionsEl = popup.querySelector('.cell-editor-options');
+  optionsEl.innerHTML = ALL_NAMES.map(n =>
+    `<div class="cell-editor-option" style="background:${colors[n]};color:${textColors[n]}" onclick="setOverrideEdit(${day},'${shift}','${n}',${idx})">${displayName(n)}</div>`
+  ).join('') + `<div class="cell-editor-option clear" onclick="setOverrideEdit(${day},'${shift}',null,${idx})">↺ Otomatik</div>`;
+
+  const rect = evt.target.getBoundingClientRect();
+  popup.style.left = (rect.left + window.scrollX) + 'px';
+  popup.style.top = (rect.bottom + window.scrollY + 6) + 'px';
+  popup.style.display = 'block';
+}
+
+function setOverrideEdit(day, shift, name, idx) {
+  const rec = recordChain[idx];
+  if (!rec || rec.locked) return;
+  recordUndoStack.push(JSON.parse(JSON.stringify(rec.overrides)));
+  recordRedoStack = [];
+  const key = overrideKey(selectedYear, selectedMonth, day, shift);
+  if (name === null) {
+    delete rec.overrides[key];
+  } else {
+    rec.overrides[key] = name;
+  }
+  document.getElementById('cellEditorPopup').style.display = 'none';
+  persistRecordChains();
+  renderRecordChain();
+}
+
+// Şu an düzenlenmekte olan (zincirdeki en sondaki, kilitsiz) kaydın son
+// hücre değişikliğini geri alır.
+function undoRecordEdit() {
+  if (recordUndoStack.length === 0) return;
+  const idx = recordChain.length - 1;
+  const rec = recordChain[idx];
+  if (!rec || rec.locked) return;
+  recordRedoStack.push(JSON.parse(JSON.stringify(rec.overrides)));
+  rec.overrides = recordUndoStack.pop();
+  persistRecordChains();
+  renderRecordChain();
+}
+
+// Geri alınan bir değişikliği tekrar ileri alır.
+function redoRecordEdit() {
+  if (recordRedoStack.length === 0) return;
+  const idx = recordChain.length - 1;
+  const rec = recordChain[idx];
+  if (!rec || rec.locked) return;
+  recordUndoStack.push(JSON.parse(JSON.stringify(rec.overrides)));
+  rec.overrides = recordRedoStack.pop();
+  persistRecordChains();
+  renderRecordChain();
+}
+
+// Bu kaydı kilitler, döngüye kalıcı olarak işler (üstteki tablo ve sonraki
+// aylar bu haliyle devam eder) ve yeni kayıt oluşturmaya hazır hale getirir.
+// Hiçbir şey sormaz.
+function saveRecord(idx) {
+  const rec = recordChain[idx];
+  if (!rec) return;
+
+  const startDate = defaultCycleStartDate();
+  const startDateObj = new Date(startDate + 'T00:00:00');
+
+  const activeIdx = getActiveCycleIndexForDate(startDateObj);
+  if (activeIdx === -1) {
+    alert('Kaydedilecek bir döngü bulunamadı. Önce en az bir döngü eklemelisiniz!');
+    return;
+  }
+  const baseCycle = cycles[activeIdx];
+  const dayLen = baseCycle.day.length || 1;
+  const nightLen = baseCycle.night.length || 1;
+
+  const newDay = [];
+  for (let i = 0; i < dayLen; i++) {
+    const d = new Date(startDateObj);
+    d.setDate(d.getDate() + i);
+    const { dayName } = getScheduleForDayFrom(d.getFullYear(), d.getMonth(), d.getDate(), rec.overrides);
+    newDay.push(dayName || '');
+  }
+  const newNight = [];
+  for (let i = 0; i < nightLen; i++) {
+    const d = new Date(startDateObj);
+    d.setDate(d.getDate() + i);
+    const { nightName } = getScheduleForDayFrom(d.getFullYear(), d.getMonth(), d.getDate(), rec.overrides);
+    newNight.push(nightName || '');
+  }
+
+  const existing = cycles.find(c => c.startDate === startDate);
+  if (existing) {
+    existing.day = newDay;
+    existing.night = newNight;
+  } else {
+    cycles.push({ day: newDay, night: newNight, startDate });
+  }
+  cycles.sort((a, b) => new Date(a.startDate + 'T00:00:00') - new Date(b.startDate + 'T00:00:00'));
+
+  overrides = JSON.parse(JSON.stringify(rec.overrides));
+  rec.locked = true;
+  recordUndoStack = [];
+  recordRedoStack = [];
+
+  persistCycles();
+  persistOverrides();
+  persistRecordChains();
+  generateTable();
+  renderRecordChain();
+  showToast('Kaydedildi ✓ Sonraki aylar bu tablodan devam edecek');
+}
+
+// Bu kaydı siler; zincirde önceki bir kayıt varsa onun kilidini açar
+// (yeniden düzenlenebilir hale getirir), yoksa üstteki tablo tek başına kalır.
+function deleteRecord(idx) {
+  recordChain.splice(idx, 1);
+  if (recordChain.length > 0) {
+    recordChain[recordChain.length - 1].locked = false;
+  }
+  recordUndoStack = [];
+  recordRedoStack = [];
+  persistRecordChains();
+  renderRecordChain();
+  showToast('Kayıt silindi ↺');
+}
+
+// Kilitli (kaydedilmiş) son kaydın kilidini silmeden açar — kaydı yeniden
+// düzenlemeye devam edebilirsiniz.
+function unlockRecord(idx) {
+  const rec = recordChain[idx];
+  if (!rec) return;
+  rec.locked = false;
+  recordUndoStack = [];
+  recordRedoStack = [];
+  persistRecordChains();
+  renderRecordChain();
+  showToast('Kilit açıldı 🔓');
+}
+
+function getEffectiveExportOverrides() {
+  return recordChain.length > 0 ? recordChain[recordChain.length - 1].overrides : overrides;
+}
+
+function hexToArgb(hex) {
+  return 'FF' + hex.replace('#', '').toUpperCase();
+}
+
+async function exportToExcel() {
+  if (typeof ExcelJS === 'undefined') {
+    alert('Excel kütüphanesi yüklenemedi. İnternet bağlantınızı kontrol edip tekrar deneyin.');
+    return;
+  }
+
+  const daysInMonth = getDaysInMonth(selectedYear, selectedMonth);
+  const holidays = getHolidays(selectedYear);
+
+  const workbook = new ExcelJS.Workbook();
+  const sheet = workbook.addWorksheet(monthsTR[selectedMonth] + ' ' + selectedYear, {
+    pageSetup: { orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 1 }
+  });
+
+  sheet.getColumn(1).width = 17;
+  for (let d = 1; d <= daysInMonth; d++) {
+    sheet.getColumn(d + 1).width = 4.6;
+  }
+  sheet.getRow(1).height = 22;
+  sheet.getRow(2).height = 85;
+  sheet.getRow(3).height = 85;
+  sheet.getRow(4).height = 85;
+
+  const thin = { style: 'thin', color: { argb: 'FF000000' } };
+  const allBorders = { top: thin, left: thin, bottom: thin, right: thin };
+  const WEEKEND_FILL = 'FFBBDEFB';
+  const HOLIDAY_FILL = 'FFFFCDD2';
+  const LABEL_FILL = 'FFF0F0F0';
+
+  function styleCell(cell, { fill, fontColor, size, rotate, wrap, valign } = {}) {
+    cell.border = allBorders;
+    cell.alignment = { horizontal: 'center', vertical: valign || 'middle', textRotation: rotate || 0, wrapText: !!wrap };
+    cell.font = { bold: true, name: 'Arial', size: size || 11, color: { argb: fontColor || 'FF000000' } };
+    if (fill) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: fill } };
+  }
+
+  sheet.mergeCells(1, 1, 2, 1);
+  const cornerCell = sheet.getCell(1, 1);
+  cornerCell.value = String(selectedYear) + '\n' + monthsTR[selectedMonth].toUpperCase();
+  styleCell(cornerCell, { size: 13, wrap: true });
+
+  const dayLabelCell = sheet.getCell(3, 1);
+  dayLabelCell.value = '07:00-19:00';
+  styleCell(dayLabelCell, { fill: LABEL_FILL, rotate: 90 });
+
+  const nightLabelCell = sheet.getCell(4, 1);
+  nightLabelCell.value = '19:00-07:00';
+  styleCell(nightLabelCell, { fill: LABEL_FILL, rotate: 90 });
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const col = d + 1;
+    const dow = getDayOfWeek(selectedYear, selectedMonth, d);
+    const dateKey = `${selectedYear}-${pad2(selectedMonth + 1)}-${pad2(d)}`;
+    const isHoliday = holidays[dateKey];
+    const isWeekend = (dow === 0 || dow === 6);
+    const headerFill = isHoliday ? HOLIDAY_FILL : (isWeekend ? WEEKEND_FILL : null);
+
+    const numCell = sheet.getCell(1, col);
+    numCell.value = d;
+    styleCell(numCell, { fill: headerFill, size: 12 });
+
+    const nameCell = sheet.getCell(2, col);
+    nameCell.value = daysTR[dow];
+    styleCell(nameCell, { fill: headerFill, rotate: 90, valign: 'bottom' });
+
+    const { dayName, nightName } = getScheduleForDayFrom(selectedYear, selectedMonth, d, getEffectiveExportOverrides());
+
+    const dCell = sheet.getCell(3, col);
+    dCell.value = dayName ? displayName(dayName) : '–';
+    styleCell(dCell, {
+      fill: dayName ? hexToArgb(colors[dayName] || '#e9ecef') : null,
+      fontColor: 'FF000000',
+      rotate: 90,
+      valign: 'middle'
+    });
+
+    const nCell = sheet.getCell(4, col);
+    nCell.value = nightName ? displayName(nightName) : '–';
+    styleCell(nCell, {
+      fill: nightName ? hexToArgb(colors[nightName] || '#e9ecef') : null,
+      fontColor: 'FF000000',
+      rotate: 90,
+      valign: 'middle'
+    });
+  }
+
+  const buffer = await workbook.xlsx.writeBuffer();
+  const filename = monthsTR[selectedMonth] + '_' + selectedYear + '_Vardiya.xlsx';
+  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+
+  // Yedek klasörü bağlıysa (veya bağlanabiliyorsa) doğrudan oraya kaydet;
+  // bağlı değilse normal şekilde indir.
+  if (!backupDirHandle && ('showDirectoryPicker' in window)) {
+    await connectBackupFolder();
+  }
+
+  if (backupDirHandle) {
+    await writeBlobToFolder(blob, filename);
+  } else {
+    downloadBlob(blob, filename);
+  }
+}
+
+async function backupData() {
+  const payload = {
+    tip: 'vardiya-yedek',
+    tarih: new Date().toISOString(),
+    cycles: cycles,
+    overrides: overrides,
+    recordChains: recordChains
+  };
+  const json = JSON.stringify(payload, null, 2);
+  const now = new Date();
+  const filename = `vardiya_yedek_${now.getFullYear()}${pad2(now.getMonth()+1)}${pad2(now.getDate())}.json`;
+
+  if (!backupDirHandle) {
+    if (!('showDirectoryPicker' in window)) {
+      const blob = new Blob([json], { type: 'application/json' });
+      await downloadBlob(blob, filename);
+      showToast('Yedek indirildi ✓');
+      return;
+    }
+    const connected = await connectBackupFolder();
+    if (!connected) return; // kullanıcı klasör seçmeden vazgeçti
+  }
+
+  writeBackupToFolder(json, filename);
+}
+
+async function writeBackupToFolder(json, filename) {
+  try {
+    const ok = await ensureBackupPermission();
+    if (!ok) {
+      showToast('Klasör izni verilmedi, dosya indiriliyor');
+      const blob = new Blob([json], { type: 'application/json' });
+      await downloadBlob(blob, filename);
+      return;
+    }
+    const fileHandle = await backupDirHandle.getFileHandle(filename, { create: true });
+    const writable = await fileHandle.createWritable();
+    await writable.write(json);
+    await writable.close();
+    showToast('Yedek klasöre kaydedildi ✓');
+  } catch (err) {
+    console.warn('Klasöre yazılamadı:', err);
+    showToast('Klasöre yazılamadı, dosya indiriliyor');
+    const blob = new Blob([json], { type: 'application/json' });
+    await downloadBlob(blob, filename);
+  }
+}
+
+
+function isNativeApp() {
+  return !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+}
+function blobToBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result).split(',')[1]);
+    r.onerror = () => reject(r.error || new Error('Dosya okunamadı'));
+    r.readAsDataURL(blob);
+  });
+}
+async function nativeSave(blob, filename) {
+  const P = window.Capacitor.Plugins;
+  const data = await blobToBase64(blob);
+  const res = await P.Filesystem.writeFile({ path: filename, data: data, directory: 'CACHE' });
+  await P.Share.share({ title: filename, url: res.uri, dialogTitle: filename });
+}
+
+async function downloadBlob(blob, filename) {
+  if (isNativeApp()) {
+    try { await nativeSave(blob, filename); }
+    catch (err) {
+      const m = String((err && err.message) || err);
+      if (!/cancel|dismiss|abort/i.test(m)) { console.warn(err); showToast('Kaydedilemedi: ' + m); }
+    }
+    return;
+  }
+  // Telefonlarda doğrudan indirme çoğu tarayıcıda sessizce engellendiği için,
+  // önce paylaşım menüsü açılır (Dosyalar'a kaydet / Excel'de aç / WhatsApp vb.).
+  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  if (isMobile && navigator.share && navigator.canShare) {
+    try {
+      const file = new File([blob], filename, { type: blob.type });
+      if (navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: filename });
+        return;
+      }
+    } catch (err) {
+      if (err && err.name === 'AbortError') return; // kullanıcı menüyü kapattı
+      console.warn('Paylaşım açılamadı, indirme deneniyor:', err);
+    }
+  }
+
+  // Bağlantı sayfaya eklenip tıklanır; adres bir süre sonra serbest bırakılır.
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  link.style.display = 'none';
+  document.body.appendChild(link);
+  link.click();
+  setTimeout(() => {
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }, 2000);
+  showToast('Excel indirildi ✓');
+}
+
+async function writeBlobToFolder(blob, filename) {
+  try {
+    const ok = await ensureBackupPermission();
+    if (!ok) {
+      showToast('Klasör izni verilmedi, Excel indiriliyor');
+      downloadBlob(blob, filename);
+      return;
+    }
+    const fileHandle = await backupDirHandle.getFileHandle(filename, { create: true });
+    const writable = await fileHandle.createWritable();
+    await writable.write(blob);
+    await writable.close();
+    showToast('Excel yedek klasörüne kaydedildi ✓');
+  } catch (err) {
+    console.warn('Excel klasöre yazılamadı:', err);
+    showToast('Klasöre yazılamadı, Excel indiriliyor');
+    downloadBlob(blob, filename);
+  }
+}
+
+function restoreFromFile(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data || !Array.isArray(data.cycles)) {
+        alert('Geçersiz yedek dosyası.');
+        return;
+      }
+      if (cycles.length > 0 && data.cycles.length === 0) {
+        const confirmed = confirm('Bu yedek dosyası boş görünüyor (içinde döngü yok). Yine de mevcut verilerinizin üzerine yazılsın mı?');
+        if (!confirmed) return;
+      }
+      cycles = data.cycles;
+      overrides = data.overrides || {};
+      recordChains = data.recordChains || {};
+      persistCycles();
+      persistOverrides();
+      persistRecordChains();
+      // NOT: syncHeaderDateToCycleStart() artık burada çağrılmıyor — görünümü
+      // en eski döngünün ayına (ör. Eylül'e) zıplatıyordu. Yedek yüklense
+      // bile o an görüntülenen ay değişmez.
+      if (document.getElementById('page2').classList.contains('active')) {
+        renderCycles();
+      } else {
+        renderPage3ForCurrentMonth();
+      }
+      showToast('Yedek yüklendi ✓');
+    } catch (err) {
+      alert('Yedek dosyası okunamadı: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+// ---- Yedek klasörü bağlantısı (File System Access API) ----
+let backupDirHandle = null;
+const BACKUP_DB_NAME = 'vardiyaYedekDB';
+const BACKUP_STORE = 'handles';
+const BACKUP_KEY = 'backupDir';
+
+function toggleBackupPanel() {
+  const panel = document.getElementById('backupPanel');
+  panel.classList.toggle('open');
+  if (panel.classList.contains('open')) {
+    renderNameEditor();
+  }
+}
+
+function closeManagePanel() {
+  const panel = document.getElementById('backupPanel');
+  if (panel) panel.classList.remove('open');
+}
+
+function openHandleDB() {
+  return new Promise((resolve, reject) => {
+    if (!('indexedDB' in window)) { reject(new Error('IndexedDB yok')); return; }
+    const req = indexedDB.open(BACKUP_DB_NAME, 1);
+    req.onupgradeneeded = () => req.result.createObjectStore(BACKUP_STORE);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function saveHandleToDB(handle) {
+  try {
+    const db = await openHandleDB();
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction(BACKUP_STORE, 'readwrite');
+      tx.objectStore(BACKUP_STORE).put(handle, BACKUP_KEY);
+      tx.oncomplete = resolve;
+      tx.onerror = () => reject(tx.error);
+    });
+  } catch (e) { console.warn('Klasör kaydedilemedi:', e); }
+}
+
+async function loadHandleFromDB() {
+  try {
+    const db = await openHandleDB();
+    return await new Promise((resolve, reject) => {
+      const tx = db.transaction(BACKUP_STORE, 'readonly');
+      const req = tx.objectStore(BACKUP_STORE).get(BACKUP_KEY);
+      req.onsuccess = () => resolve(req.result || null);
+      req.onerror = () => reject(req.error);
+    });
+  } catch (e) { return null; }
+}
+
+async function ensureBackupPermission() {
+  if (!backupDirHandle) return false;
+  const opts = { mode: 'readwrite' };
+  if ((await backupDirHandle.queryPermission(opts)) === 'granted') return true;
+  if ((await backupDirHandle.requestPermission(opts)) === 'granted') return true;
+  return false;
+}
+
+function updateBackupUI() {
+  const dot = document.getElementById('backupDot');
+  const nameEl = document.getElementById('backupFolderName');
+  if (backupDirHandle) {
+    dot.classList.add('connected');
+    nameEl.textContent = backupDirHandle.name;
+    nameEl.classList.add('connected');
+  } else {
+    dot.classList.remove('connected');
+    nameEl.textContent = 'Bağlı değil';
+    nameEl.classList.remove('connected');
+  }
+}
+
+async function connectBackupFolder() {
+  if (!('showDirectoryPicker' in window)) {
+    alert('Bu tarayıcı klasöre bağlanmayı desteklemiyor. Yedekle butonu dosya indirmeye devam edecek.');
+    return false;
+  }
+  try {
+    const handle = await window.showDirectoryPicker();
+    const perm = await handle.requestPermission({ mode: 'readwrite' });
+    if (perm !== 'granted') {
+      showToast('Klasör izni verilmedi');
+      return false;
+    }
+    backupDirHandle = handle;
+    await saveHandleToDB(handle);
+    updateBackupUI();
+    showToast('Klasöre bağlandı, artık her zaman buraya yedeklenecek ✓');
+    await autoRestoreFromFolder();
+    return true;
+  } catch (err) {
+    if (err.name !== 'AbortError') console.warn('Klasör seçilemedi:', err);
+    return false;
+  }
+}
+
+// Klasördeki en güncel yedek dosyasını bulup otomatik olarak yükler.
+async function findLatestBackupFileName() {
+  if (!backupDirHandle || !backupDirHandle.values) return null;
+  let latestName = null;
+  for await (const entry of backupDirHandle.values()) {
+    if (entry.kind === 'file' && /^vardiya_yedek_\d{8}\.json$/.test(entry.name)) {
+      if (!latestName || entry.name > latestName) latestName = entry.name;
+    }
+  }
+  return latestName;
+}
+
+async function autoRestoreFromFolder() {
+  if (!backupDirHandle) return;
+  try {
+    const ok = await ensureBackupPermission();
+    if (!ok) return;
+    const latestName = await findLatestBackupFileName();
+    if (!latestName) return;
+    const fileHandle = await backupDirHandle.getFileHandle(latestName);
+    const file = await fileHandle.getFile();
+    const text = await file.text();
+    const data = JSON.parse(text);
+    if (!data || !Array.isArray(data.cycles)) return;
+
+    // Güvenlik kontrolü: yerelde zaten veri varsa, boş ya da daha eski bir
+    // yedeğin üzerine sessizce yazılmasını asla kabul etme.
+    const hasLocalData = cycles.length > 0;
+    const backupIsEmpty = data.cycles.length === 0;
+    if (hasLocalData && backupIsEmpty) {
+      console.warn('Otomatik yükleme atlandı: yedek boş, yerel veri korunuyor.');
+      return;
+    }
+    if (hasLocalData && data.tarih) {
+      const localTimeRaw = localStorage.getItem(LAST_SAVE_KEY);
+      if (localTimeRaw) {
+        const backupTime = new Date(data.tarih).getTime();
+        const localTime = new Date(localTimeRaw).getTime();
+        if (!isNaN(backupTime) && !isNaN(localTime) && backupTime <= localTime) {
+          console.warn('Otomatik yükleme atlandı: yedek yerel veriden daha eski.');
+          return;
+        }
+      }
+    }
+
+    cycles = data.cycles;
+    overrides = data.overrides || {};
+    recordChains = data.recordChains || {};
+    persistCycles();
+    persistOverrides();
+    persistRecordChains();
+    // NOT: syncHeaderDateToCycleStart() artık burada çağrılmıyor — arka
+    // planda otomatik yedek yüklendiğinde görünümü en eski döngünün ayına
+    // (ör. Eylül'e) sessizce zıplatıyordu. Otomatik yükleme artık o an
+    // görüntülenen ayı değiştirmiyor.
+    if (document.getElementById('page2').classList.contains('active')) {
+      renderCycles();
+    } else {
+      renderPage3ForCurrentMonth();
+    }
+    showToast('Yedek klasöründen otomatik yüklendi ✓');
+  } catch (err) {
+    console.warn('Klasörden otomatik yüklenemedi:', err);
+  }
+}
+
+async function tryReconnectBackupFolder() {
+  const handle = await loadHandleFromDB();
+  if (!handle) { updateBackupUI(); return; }
+  try {
+    const perm = await handle.queryPermission({ mode: 'readwrite' });
+    backupDirHandle = handle;
+    updateBackupUI();
+    if (perm === 'granted') {
+      await autoRestoreFromFolder();
+    }
+    // İzin verilmemişse sessizce yeniden istenemez; kullanıcı Yedekle'ye bastığında tekrar sorulur.
+  } catch (e) {
+    updateBackupUI();
+  }
+}
+
+document.addEventListener('click', function(e) {
+  const widget = document.querySelector('.backup-widget');
+  const panel = document.getElementById('backupPanel');
+  if (widget && panel && panel.classList.contains('open') && !widget.contains(e.target)) {
+    panel.classList.remove('open');
+  }
+});
+
+// Sayfa 3'te üstte ana tablo (id="tableContainer") ve altta kayıt zincirindeki
+// (recordsChain) 0'dan fazla ek tablo bulunabilir; bunların hepsi ".schedule-table-wrap"
+// sınıfını taşır ve kendi başına yatayda kaydırılabilir. Biri kaydırıldığında
+// hepsinin birlikte kaymasını istiyoruz. Tablolar dinamik olarak innerHTML ile
+// yeniden çizildiğinden tek tek elemana değil, page3'ün tamamını kapsayan üst
+// kapsayıcıya "capture" modunda bir dinleyici ekliyoruz — scroll olayı
+// yükselmediği (bubble etmediği) için capture gerekli. document.querySelectorAll
+// her seferinde o anki tüm tabloları bulduğu için ana tablo + 2, 3, 4... kayıt
+// tablosu, sayıları ne olursa olsun otomatik senkronize kayar.
+(function setupSyncedTableScroll() {
+  const root = document.getElementById('page3') || document;
+  let syncing = false;
+  root.addEventListener('scroll', function(e) {
+    const src = e.target;
+    if (!src.classList || !src.classList.contains('schedule-table-wrap')) return;
+    if (syncing) return;
+    syncing = true;
+    const left = src.scrollLeft;
+    document.querySelectorAll('.schedule-table-wrap').forEach(function(el) {
+      if (el !== src) el.scrollLeft = left;
+    });
+    syncing = false;
+  }, true);
+})();
+
+window.onload = function() {
+  loadRosterFromStorage();
+  loadCyclesFromStorage();
+  loadOverridesFromStorage();
+  loadNameLabelsFromStorage();
+  loadRecordChainsFromStorage();
+  const now = new Date();
+  selectedYear = now.getFullYear();
+  selectedMonth = now.getMonth();
+  updateHeaderDateDisplay();
+  // NOT: Burada artık syncHeaderDateToCycleStart() ÇAĞRILMIYOR. O fonksiyon
+  // görünümü en eski döngünün başlangıç ayına zorluyordu; bu yüzden sayfa her
+  // yenilendiğinde/açıldığında (örn. iki döngü ekleyip kaydettikten sonra)
+  // görünüm sessizce ilk döngünün ayına (ör. Eylül'e) geri dönüyor ve bir
+  // sonraki "Döngü Ekle" o unutulmuş aya ekleniyordu. Sayfa artık gerçek
+  // "bugünkü" ayı gösteriyor.
+  renderCycles();
+  tryReconnectBackupFolder();
+};
+</script>
+</body>
+</html>
+
